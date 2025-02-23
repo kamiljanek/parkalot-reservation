@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parkalot-reservation", "src/clicker/parkalot-reservation-clicker.csproj", "{E310D1A8-E043-4CBA-B9A4-9366A2BD9167}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parkalot-reservation-clicker", "src\parkalot-reservation-clicker\parkalot-reservation-clicker.csproj", "{E310D1A8-E043-4CBA-B9A4-9366A2BD9167}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parkalot-reservation-request", "src\request\parkalot-reservation-request\parkalot-reservation-request.csproj", "{FCD51D26-7A80-468A-93C4-D743762E22AA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "parkalot-reservation-request", "src\parkalot-reservation-request\parkalot-reservation-request.csproj", "{FCD51D26-7A80-468A-93C4-D743762E22AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
