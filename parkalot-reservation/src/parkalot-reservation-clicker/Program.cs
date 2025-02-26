@@ -1,6 +1,6 @@
 ﻿using Microsoft.Playwright;
 
-namespace parkalot_reservation;
+namespace parkalot_reservation_clicker;
 
 class Program
 {
@@ -26,7 +26,7 @@ class Program
         await page.GotoAsync("https://app.parkalot.io/#/client");
         await Task.Delay(2000);
 
-
+        
         switch (reservationType)
         {
             case EReservationType.Desk:

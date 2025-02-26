@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Playwright;
 
-namespace parkalot_reservation;
+namespace parkalot_reservation_clicker;
 
 public static class Shared
 {

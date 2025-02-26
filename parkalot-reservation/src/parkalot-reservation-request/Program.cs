@@ -64,7 +64,7 @@ static class Program
             var now = DateTime.Now;
             if (now.DayOfWeek == DayOfWeek.Friday && 
                 now.TimeOfDay >= new TimeSpan(10, 0, 10) && 
-                now.TimeOfDay <= new TimeSpan(10, 2, 0))
+                now.TimeOfDay <= new TimeSpan(10, 3, 0))
                 return;
 
             Console.WriteLine($"{DateTime.Now:T} - Waiting for friday... 10:00:10");

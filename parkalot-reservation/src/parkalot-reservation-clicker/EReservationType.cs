@@ -1,4 +1,4 @@
-namespace parkalot_reservation;
+namespace parkalot_reservation_clicker;
 
 public enum EReservationType
 {
