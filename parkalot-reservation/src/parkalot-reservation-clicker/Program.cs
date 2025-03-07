@@ -8,7 +8,7 @@ class Program
 
     static async Task Main()
     {
-        var reservationType = EReservationType.Desk;
+        var reservationType = EReservationType.Parking;
         
         
         using var playwright = await Playwright.CreateAsync();
