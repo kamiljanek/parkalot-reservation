@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 
 namespace parkalot_reservation_request;
@@ -15,10 +16,18 @@ static class Program
         var configSettings = configuration.GetSection(Configuration.ConfigurationSectionName).Get<Configuration>();
 
         using var client = new HttpClient();
+        
+        var accessToken = await GetToken(client, configSettings);
 
-        client.AddHeaders(configSettings);
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            configSettings.Bearer = accessToken;
+        }
 
-        // UNDONE: how to update bearer token automatically
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {configSettings.Bearer}");
+        
+        // await ReserveDesk(client, configSettings);
+        // UNDONE: add counting days for ReserveDesk
 
         await DelayUntilFriday();
 
@@ -38,12 +47,33 @@ static class Program
         await Task.Delay(-1);
     }
 
+    static async Task ReserveDesk(HttpClient client, Configuration configSettings)
+    {
+        try
+        {
+            var url = new Uri(new Uri(configSettings.BaseUri), RelativeUriPath.DeskPath);
+
+            var body = BuildDeskBody(configSettings);
+            var jsonBody = JsonSerializer.Serialize(body);
+            var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync(url, content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            Console.WriteLine("Response: " + responseContent);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Request failed: " + ex.Message);
+        }
+    }
+
     static async Task SendRequest(HttpClient client, Configuration configSettings, string parkingSpot)
     {
         try
         {
             var url = new Uri(new Uri(configSettings.BaseUri), RelativeUriPath.ParkingPath);
-            var body = BuildBody(configSettings, parkingSpot);
+            var body = BuildParkingBody(configSettings, parkingSpot);
             var jsonBody = JsonSerializer.Serialize(body);
             var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
@@ -55,6 +85,55 @@ static class Program
         {
             Console.WriteLine(ex.Message);
         }
+    }
+    
+    static async Task<string> GetToken(HttpClient client, Configuration configSettings)
+    {
+        var accessToken = "";
+        try
+        {
+            var baseUrl = new Uri(new Uri(configSettings.RefreshTokenBaseUrl), RelativeUriPath.TokenPath);
+            
+            var queryParams = new Dictionary<string, string>
+            {
+                { "key", configSettings.Key }
+            };
+
+            var fullUrl = QueryHelpers.AddQueryString(baseUrl.OriginalString, queryParams);
+            
+            var requestBody = $"grant_type=refresh_token&refresh_token={configSettings.RefreshToken}";
+            
+            var content = new StringContent(requestBody, Encoding.UTF8, "application/x-www-form-urlencoded");
+                   
+            var response = await client.PostAsync(fullUrl, content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+        
+            if (response.IsSuccessStatusCode)
+            {
+                using var doc = JsonDocument.Parse(responseContent);
+                if (doc.RootElement.TryGetProperty("access_token", out JsonElement tokenElement))
+                {
+                    accessToken = tokenElement.GetString();
+                }
+                else
+                {
+                    Console.WriteLine("Response does not contain an access token.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Error: " + response.StatusCode);
+                Console.WriteLine(responseContent);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        return accessToken ?? string.Empty;
     }
     
     static async Task DelayUntilFriday()
@@ -72,7 +151,7 @@ static class Program
         }
     }
 
-    private static object BuildBody(Configuration? configSettings, string spotId)
+    private static object BuildParkingBody(Configuration? configSettings, string spotId)
     {
         var shiftValue = "00002400";
         var body = new
@@ -82,6 +161,25 @@ static class Program
             uid = configSettings.MeId,
             resources = BuildResources(shiftValue, spotId)
         };
+        return body;
+    }
+    
+    private static object BuildDeskBody(Configuration? configSettings)
+    {
+        var shiftValue = "00002400";
+        var body = new
+        {
+            me = configSettings.MeId,
+            parkingId = configSettings.DeskParkingId,
+            uid = configSettings.MeId,
+            spotId = "cccbbbbbaaaaa",
+            day = 20171,
+            // UNDONE: add counting days /\
+            addShifts = new[] { shiftValue },
+            removeShifts = new string[] { },
+            v = configSettings.DeskBodyV
+        };
+
         return body;
     }
 
@@ -100,19 +198,5 @@ static class Program
         }
         
         return resources.ToArray();
-    }
-
-    private static void AddHeaders(this HttpClient client, Configuration? configSettings)
-    {
-        client.DefaultRequestHeaders.Add("Accept", "*/*");
-        client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {configSettings.Bearer}");
-        client.DefaultRequestHeaders.Add("Priority", "u=1, i");
-        client.DefaultRequestHeaders.Add("Sec-CH-UA", "\"Not(A:Brand\";v=\"99\", \"Google Chrome\";v=\"133\", \"Chromium\";v=\"133\"");
-        client.DefaultRequestHeaders.Add("Sec-CH-UA-Mobile", "?0");
-        client.DefaultRequestHeaders.Add("Sec-CH-UA-Platform", "\"Windows\"");
-        client.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "empty");
-        client.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "cors");
-        client.DefaultRequestHeaders.Add("Sec-Fetch-Site", "cross-site");
     }
 }
