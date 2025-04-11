@@ -30,6 +30,7 @@ static class Program
         
         // await ReserveDesk(client, configSettings);
         // UNDONE: add counting days for ReserveDesk
+        // UNDONE: add counting days for ReserveDesk
 
 
         var parkingSpots = ParkingSpots.GetSelectedSpots();
